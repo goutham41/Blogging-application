@@ -1,0 +1,6 @@
+.inputBox{
+  display :none;
+}
+.thread:hover .inputBox{
+  display: flex;
+}

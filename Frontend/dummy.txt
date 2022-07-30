@@ -1,0 +1,748 @@
+// const passport = require("passport");
+// const Users = require("./model/User");
+// const session = require("express-session");
+// var GitHubStrategy = require("passport-github").Strategy;
+// app.use(
+//   session({
+//     secret: "goutham123",
+//     resave: false,
+//     saveUninitialized: false,
+//     cookie: {
+//       httpOnly: true,
+//       secure: false,
+//       maxAge: 24 * 60 * 60 * 1000,
+//     },
+//   }),
+// );
+// app.use(passport.initialize());
+// app.use(passport.session());
+// passport.serializeUser((user, cb) => {
+//   cb(null, user.id);
+// });
+// passport.deserializeUser((id, cb) => {
+//   cb(null, id);
+// });
+// passport.use(
+//   new GitHubStrategy(
+//     {
+//       clientID: "23e071720101e336b3f1",
+//       clientSecret: "f120d81011a8d5523125da42f3d740ff43d8fa90",
+//       callbackURL: "http://localhost:8080/auth/github/callback",
+//     },
+//     function (accessToken, refreshToken, profile, cb) {
+//       let obj = {
+//         UserName: profile.username,
+//         email: profile.displayName,
+//         password: profile.id,
+//       };
+//       const user = new Users(obj);
+//        Users.find({UserName:obj.UserName}).exec((err, succ) => {
+
+//          if (succ) {
+//             if (succ.length != 1) {
+//             user.save().exec((err,succ)=>{
+//               if(succ){
+//                  let userid = succ.data._id;
+//                  console.log(userid)
+//               }
+//             })
+//            }
+//           //  else{
+//           //   redirect(`http://localhost:3000/users/blogs/${succ.data._id}`);
+//           //  }
+//           //  return cb(err, user);
+//          }
+
+//        });
+//       //
+//       // console.log(profile);
+
+//       cb(null, profile);
+//     },
+//   ),
+// );
+
+// app.get("/auth/github", passport.authenticate("github"));
+// app.get(
+//   "/auth/github/callback",
+//   passport.authenticate("github", { failureRedirect: "/login" }),
+//   function (req, res) {
+//     // Successful authentication, redirect home.
+//     console.log("jjjj", req.user.id);
+//     res.redirect("/auth/login/success");
+//   },
+// );
+// app.get("/login", (req, res) => {
+//   //  console.log(res.user);
+//   if (req.user) {
+//     return res.redirect("/");
+//   }
+//   res.send("<a href='http://localhost:8080/auth/github'>LOGIN WITH GITHUB</a>");
+// });
+
+// const isAuth = (req, res, next) => {
+//   if (req.user) {
+//     next();
+//   } else {
+//     res.redirect("/login");
+//   }
+// };
+
+// app.get("/auth/login/success", isAuth, (req, res) => {
+//   // console.log(res)
+//   res.send(
+//     `<div><a href='http://localhost:8080/logout'>LOGOUT</a><p>login succes</p></div>`,
+//   );
+// });
+
+// app.get("/logout", (req, res) => {
+//   // req.logOut();
+//   res.redirect("/login");
+//   // res.send("LOGOUT SUCCESS");
+// });
+/////////
+
+import React, { useState, useContext } from "react";
+import TextButton from "../ButtonCmp/TextButton";
+import DashedButton from "../ButtonCmp/PrimaryButton";
+import Navbar from "./Navbar";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { toast } from "react-toastify";
+import styled from "styled-components";
+import { AuthContext } from "./Auth";
+const LogInDiv = styled.div`
+  border: 2.5px solid ${(props) => (props.borderprimary ? "#fff" : "gainsboro")};
+  height: 170pxpx;
+  width: 25%;
+  padding: 10px;
+  background-color: ${(props) => (props.primary ? `${props.primary}` : "#fff")};
+  color: ${(props) =>
+    props.primaryColor ? `${props.primaryColor}` : "darkslategray"};
+  border-radius: 15px;
+  display: inlineBlock;
+  justify-content: end;
+  margin: auto;
+  margin-top: 50px;
+  text-align: center;
+`;
+const LoginForm = () => {
+  const [form, setForm] = useState({});
+  const { token, setToken, assured, setAssured, setId, author, setAuthor } =
+    useContext(AuthContext);
+  const navigate = useNavigate();
+  const handleChange = (e) => {
+    setForm({
+      ...form,
+      [e.target.name]: e.target.value,
+    });
+  };
+       const github = () => {
+         window.open("http://localhost:8080/auth/github", "_self");
+       };
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    console.log(form)
+    axios
+      .post("http://localhost:8080/users/login", form)
+      .then((response) => {
+        // console.log(response);
+        setToken(response.data.token);
+        setAssured(true);
+        setId(response.data.user._id);
+        setAuthor(response.data.user.UserName);
+        navigate(`/users/blogs/${response.data.user._id}`);
+      })
+      .catch((error) => {
+        toast.dismiss();
+        toast.error("User Not Authorized");
+        setAssured(false);
+        console.log(error.response);
+      });
+  };
+
+  return (
+    <>
+      <h2 style={{ color: "GrayText", textAlign: "center" }}>Log in</h2>
+      <LogInDiv>
+        <form onSubmit={handleSubmit}>
+          <div
+            style={{
+              border: "1px solid gainsboro",
+              justifyContent: "space-evenly",
+              display: "flex",
+              marginTop: "20px",
+              padding: "5px",
+            }}
+          >
+            <div>
+              <label>Email</label>
+            </div>
+            <div>
+              <input
+                name="email"
+                id="user"
+                style={{
+                  border: "0px solid red",
+                  borderBottom: "2px solid teal",
+                  outline: "none",
+                }}
+                onChange={handleChange}
+                type="text"
+              />
+            </div>
+          </div>
+          <div
+            style={{
+              border: "1px solid gainsboro",
+              justifyContent: "space-evenly",
+              display: "flex",
+              marginTop: "20px",
+              padding: "5px",
+            }}
+          >
+            <label style={{ color: "teal" }}>password</label>
+            <input
+              name="password"
+              style={{
+                border: "0px solid red",
+                borderBottom: "2px solid teal",
+                outline: "none",
+              }}
+              onChange={handleChange}
+              type="text"
+            />
+          </div>
+          <DashedButton style={{ marginTop: "20px" }} type="submit">
+            Login
+          </DashedButton>
+        </form>
+  
+ <DashedButton onClick={github}>LOGIN WITH GITHUB</DashedButton>;
+      </LogInDiv>
+    </>
+  );
+};
+
+export default LoginForm;
+
+ //
+
+////////////////////
+
+/*  <Tr isOdd={Boolean(index % 2)} key={elem._id}>
+                  <td
+                    style={{ textDecoration: "underline" }}
+                    onClick={() => {
+                      navigate(`/blogs/${elem._id}`);
+                    }}
+                  >
+                    {index + 1}
+                  </td>
+                  <td
+                    onClick={() => {
+                      navigate(`/blogs/${elem._id}`);
+                    }}
+                  >
+                    {elem.Title}
+                  </td>
+                  <td>{elem.categories}</td>
+                  <td>
+                    <button
+                      style={{
+                        cursor: "pointer",
+                        height: "35px",
+                        backgroundColor: "#fff",
+                      }}
+                      onClick={() => {
+                        navigate(`/blogs/${elem._id}/edit`);
+                      }}
+                    >
+                      <AiOutlineEdit size="20px" />
+                    </button>
+                  </td> 
+                  <td>
+                    <button
+                      style={{
+                        cursor: "pointer",
+                        height: "35px",
+                        backgroundColor: "#fff",
+                      }}
+                      onClick={() => {
+                        navigate(`/blogs/${elem._id}/delete`);
+                      }}
+                    >
+                      <MdDelete size="20px" color="#cc0000" />
+                    </button>
+                  </td> 
+                </Tr>*/
+                
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+ <div className={styles.main}>
+          <table>
+            {show && (
+              <tr>
+                <th>S/no</th>
+                <th>TITLE</th>
+                <th>categories</th>
+                <th></th>
+                <th></th>
+              </tr>
+            )}
+            {data.map((elem, index) => {
+              return (
+                <Tr isOdd={Boolean(index % 2)} key={elem._id}>
+                  <td
+                    style={{ textDecoration: "underline" }}
+                    onClick={() => {
+                      navigate(`/blogs/${elem._id}`);
+                    }}
+                  >
+                    {index + 1}
+                  </td>
+                  <td
+                    onClick={() => {
+                      navigate(`/blogs/${elem._id}`);
+                    }}
+                  >
+                    {elem.Title}
+                  </td>
+                  <td>{elem.categories}</td>
+                  <td>
+                    <button
+                      style={{
+                        cursor: "pointer",
+                        height: "35px",
+                        backgroundColor: "#fff",
+                      }}
+                      onClick={() => {
+                        navigate(`/blogs/${elem._id}/edit`);
+                      }}
+                    >
+                      <AiOutlineEdit size="20px" />
+                    </button>
+                  </td>
+                  <td>
+                    <button
+                      style={{
+                        cursor: "pointer",
+                        height: "35px",
+                        backgroundColor: "#fff",
+                      }}
+                      onClick={() => {
+                        navigate(`/blogs/${elem._id}/delete`);
+                      }}
+                    >
+                      <MdDelete size="20px" color="#cc0000" />
+                    </button>
+                  </td>
+                </Tr>
+              );
+            })}
+          </table>
+        </div>
+        /////////////////////////
+
+          <div className={styles.main}>
+          <table>
+            {show && 
+            <tr>
+              <th>Id</th>
+              <th>TITLE</th>
+              <th></th>
+              <th></th>
+            </tr>}
+            {data.map((elem, index) => {
+              return (
+                <Tr isOdd={Boolean(index % 2)} key={elem._id}>
+                  <td
+                    style={{ textDecoration: "underline" }}
+                    onClick={() => {
+                      navigate(`/blogs/${elem._id}`);
+                    }}
+                  >
+                    {index + 1}
+                  </td>
+                  <td
+                    onClick={() => {
+                      navigate(`/blogs/${elem._id}`);
+                    }}
+                  >
+                    {elem.Title}
+                  </td>
+                  <td>
+                    <button
+                      style={{
+                        cursor: "pointer",
+                        height: "35px",
+                        backgroundColor: "#fff",
+                      }}
+                      onClick={() => {
+                        axios
+                          .delete(
+                            `http://localhost:8080/blogs/${elem._id}/false`,
+                          )
+                          .then((res) => {
+                            toast.dismiss();
+                            toast.success("YOU BLOG IS RESTORE");
+                            navigate("/blogs");
+                          })
+                          .catch((err) => err.message);
+                      }}
+                    >
+                      <MdOutlineRestore size="25px" color="teal" />
+                    </button>
+                  </td>
+                  <td>
+                    <button
+                      style={{
+                        cursor: "pointer",
+                        height: "35px",
+                        backgroundColor: "#fff",
+                      }}
+                      onClick={() => {
+                        axios
+                          .delete(
+                            `http://localhost:8080/blogs/${elem._id}/delete`,
+                          )
+                          .then((res) => {
+                            
+                            toast.dismiss();
+                            toast.error("YOU BLOG IS DELETED");
+                            navigate("/blogs");
+                          })
+                          .catch((err) => err.message);
+                      }}
+                    >
+                      <MdDelete size="20px" color="#cc0000" />
+                    </button>
+                  </td>
+                </Tr>
+              );
+            })}
+          </table>
+        </div>
+        ////////////////////////////////////////////////////////////////////////////////
+        import React, { useState,useContext } from "react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
+import { useEffect } from "react";
+import { AuthContext } from "./Auth";
+const CreateBlogs = () => {
+   const { token, setToken, assured, setAssured, id1,author } = useContext(AuthContext);
+  let navigate = useNavigate();
+  const [value, setValue] = useState("");
+  const [content, setContent] = useState("");
+  const [count, setCount] = useState(0);
+  const [one, setOne] = useState(0);
+  const [Category,setCategory] = useState("")
+ 
+    const [data, setData] = useState([]);
+  useEffect(() => {
+    if (value.length > 30) {
+      toast.dismiss();
+      toast.error("You characters Should be lessthan 30 characters");
+    }
+    setCount(value.length);
+  }, [value]);
+
+  useEffect(() => {
+    if (content.length > 300) {
+      toast.dismiss();
+      toast.error("You characters Should be lessthan 300characters");
+    }
+    setOne(content.length);
+  }, [content]);
+
+
+  useEffect(()=>{
+     axios
+       .get(`http://localhost:8080/users`)
+       .then((res) => {
+          setData(res.data)
+          console.log(res.data)
+       })
+       .catch((err) => err.message);
+  },[])
+
+  return (
+    <>
+      <div style={{ height: "60px" }}></div>
+      <div style={{ marginTop: "100px", width: "40%", margin: "auto" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-around",
+            border: "1px solid gray",
+            padding: "10px 0px",
+            borderBottom: "0px",
+            borderRadius: "0px",
+            paddingTop: "30px",
+          }}
+        >
+          <p>TITLE</p>
+          <input
+            style={{ width: "198px", marginLeft: "22px" }}
+            type="text"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+          />
+        </div>
+        <p
+          style={{ marginLeft: "450px", marginTop: "-30px", fontSize: "13px" }}
+        >
+          {count}/30
+        </p>
+        <br />
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-around",
+            border: "1px solid gray",
+            padding: "10px 0px",
+            borderTop: "0px",
+            marginTop: "-22px",
+            paddingBottom: "30px",
+          }}
+        >
+          <p>CONTENT</p>
+          <textarea
+            style={{ height: "150px", width: "200px" }}
+            type="text"
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+          />
+        </div>
+        <p
+          style={{ marginLeft: "460px", marginTop: "-50px", fontSize: "13px" }}
+        >
+          {one}/300
+        </p>
+
+        <br />
+        <div style={{ marginTop: "-100px", marginLeft: "-330px" }}>
+          <select
+            style={{ border: "1px solid gray", padding: "10px" }}
+            value={Category}
+            onChange={(e) => setCategory(e.target.value)}
+          >
+            <option>Categories</option>
+            <option value="Movie">Movie</option>
+            <option value="Books">Books</option>
+            <option value="Finance">Finance</option>
+            <option value="StockNote">StockNote</option>
+          </select>
+        </div>
+
+        {/* <div style={{ marginTop: "20px", marginLeft: "-330px" }}>
+          <select value={author} onChange={(e) => setAuthor(e.target.value)}>
+            <option>Author</option>
+            {data.map((elem, index) => {
+              return <option value={elem._id}>{elem.UserName}</option>;
+            })}
+          </select>
+        </div> */}
+
+        <div style={{ marginTop: "100px" }}>
+          {" "}
+          <button
+            style={{
+              height: "40px",
+              width: "130px",
+              background: "#00afef",
+              borderRadius: "15px",
+              border: "0px",
+              fontSize: "20px",
+              cursor: "pointer",
+              color: "#fff",
+            }}
+            onClick={() => {
+              if (
+                value.length > 0 &&
+                content.length > 0 &&
+                content.length <= 300 &&
+                value.length <= 30
+              ) {
+                axios
+                  .post(`http://localhost:8080/blogs/create`, {
+                    Title: value,
+                    Content: content,
+                    categories: Category,
+                    userId: id1,
+                  })
+                  .then((res) => {
+                    navigate("/blogs");
+                    axios.put(`http://localhost:8080/users/blog/${id1}`, {
+                      id: res.data._id,
+                    });
+                    axios.post(`http://localhost:8080/likes/`, {
+                      likes: 0,
+                      blogId: res.data._id,
+                    });
+                    toast.dismiss();
+                    toast.success("BLOG CREATE SUCCESSFULLY");
+                  })
+                  .catch((err) => err.message);
+              } else {
+                toast.dismiss();
+                toast.error("ERROR DUE TO VALIDATION");
+              }
+            }}
+          >
+            Publish
+          </button>
+        </div>
+      </div>
+    </>
+  );
+};
+
+export default CreateBlogs;
+//////////////
+
+import React, { useState, useEffect,useContext } from "react";
+import axios from "axios";
+import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
+import { AuthContext } from "../components/Auth";
+const Edit = () => {
+  let navigate = useNavigate();
+   const { token, setToken, assured, setAssured, id1 } =useContext(AuthContext);
+  const { id } = useParams();
+  const [value, setValue] = useState("");
+  const [content, setContent] = useState("");
+  useEffect(() => {
+    axios
+      .get(`http://localhost:8080/blogs/${id}`)
+      .then((res) => {
+        setValue(res.data[0].Title);
+        setContent(res.data[0].Content);
+      })
+      .catch((err) => err.message);
+
+    // {headers: {
+    //   Authorization: token ? `Token ${token}` : "",
+    // }}
+  }, [id]);
+
+  const [count, setCount] = useState(0);
+  const [one, setOne] = useState(0);
+  useEffect(() => {
+    if (value.length > 30) {
+      toast.dismiss();
+      toast.error("You characters Should be lessthan 30 characters");
+    }
+    setCount(value.length);
+  }, [value]);
+
+  useEffect(() => {
+    if (content.length > 300) {
+      toast.dismiss();
+      toast.error("You characters Should be lessthan 300 characters");
+    }
+    setOne(content.length);
+  }, [content]);
+
+  return (
+    <>
+      {" "}
+      <div style={{ height: "60px" }}></div>
+      <div style={{ marginTop: "100px", width: "40%", margin: "auto" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-around",
+            border: "1px solid gray",
+            padding: "10px 0px",
+            borderBottom: "0px",
+          }}
+        >
+          <p>TITLE</p>
+          <input
+            style={{ width: "198px", marginLeft: "px" }}
+            type="text"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+          />
+        </div>
+        <p
+          style={{ marginLeft: "450px", marginTop: "-30px", fontSize: "13px" }}
+        >
+          {count}/30
+        </p>
+        <br />
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-around",
+            border: "1px solid gray",
+            padding: "10px 0px",
+            borderTop: "0px",
+            marginTop: "-22px",
+          }}
+        >
+          <p>CONTENT</p>
+          <textarea
+            style={{
+              height: "200px",
+              width: "200px",
+              padding: "10px 10px",
+              marginLeft: "-20px",
+            }}
+            type="text"
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+          />
+        </div>
+        <p
+          style={{ marginLeft: "460px", marginTop: "-30px", fontSize: "13px" }}
+        >
+          {one}/300
+        </p>
+        <br />
+        <button
+          style={{
+            height: "40px",
+            width: "130px",
+            background: "#00afef",
+            borderRadius: "15px",
+            border: "0px",
+            fontSize: "20px",
+            cursor: "pointer",
+            color: "#fff",
+          }}
+          onClick={() => {
+            axios
+              .put(
+                `http://localhost:8080/blogs/${id}`,
+                {
+                  Content: content,
+                  Title: value,
+                },
+                {
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                  },
+                },
+              )
+              .then((res) => {
+                toast.dismiss();
+                toast.success("You Blog is updated");
+                navigate("/blogs");
+              })
+              .catch((err) => err.message);
+          }}
+        >
+          Update
+        </button>
+      </div>
+    </>
+  );
+};
+
+export default Edit;
